@@ -5,6 +5,4 @@
 anton_balakirev@epage.ru
 
 hw01-gradle: gradle + guava<br>
-sources:<br>
-- https://www.youtube.com/watch?v=yYwDnwcawZ4
-- https://github.com/google/guava/wiki
+hw03-reflection: annotations + reflection
