@@ -4,35 +4,50 @@ import ru.otus.annotations.After;
 import ru.otus.annotations.Before;
 import ru.otus.annotations.Test;
 import ru.otus.exceptions.FixtureException;
-import ru.otus.exceptions.TestException;
+import ru.otus.exceptions.TestMethodException;
 import ru.otus.test.BaseTest;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ExecuterUtils {
 
-    public static void executeTestClass(Class<? extends BaseTest> testClass) throws TestException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public static void executeTestClass(BaseTest exampleTest) throws TestMethodException {
 
-        BaseTest exampleTest = testClass.getDeclaredConstructor().newInstance();
+        Class<? extends BaseTest> testClass = exampleTest.getClass();
         Method[] methodArray = testClass.getDeclaredMethods();
+        List<Method> testMethodsList = getMethods(methodArray, Test.class);
+        List<Method> beforeMethodsList = getMethods(methodArray, Before.class);
+        List<Method> afterMethodsList = getMethods(methodArray, After.class);
 
         int allTestCount = 0;
         int failedTestCount = 0;
 
-        for (Method method : methodArray) {
+        for (Method method : testMethodsList) {
             if (method.isAnnotationPresent(Test.class)) {
                 try {
-                    executeBeforeMethod(methodArray, exampleTest);
+                    executeBeforeMethod(beforeMethodsList, exampleTest);
                     failedTestCount +=
                             executeTestMethod(method, exampleTest);
-                    executeAfterMethod(methodArray, exampleTest);
-                    allTestCount++;
                 } catch (FixtureException e) {
                     System.out.println(e.getMessage());
                     e.printStackTrace();
                     return;
                 }
+
+                try {
+                    executeAfterMethod(afterMethodsList, exampleTest);
+                } catch (FixtureException e) {
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
+                    return;
+                }
+
+                allTestCount++;
             }
         }
 
@@ -43,8 +58,14 @@ public class ExecuterUtils {
         );
     }
 
-    public static void executeBeforeMethod(Method[] methodArray, BaseTest exampleTest) throws FixtureException {
-        for (Method m : methodArray) {
+    private static List<Method> getMethods(Method[] methodArray, Class<? extends Annotation> clazz) {
+        return Arrays.stream(methodArray)
+                .filter(method -> method.isAnnotationPresent(clazz))
+                .collect(Collectors.toList());
+    }
+
+    public static void executeBeforeMethod(List<Method> beforeMethodsList, BaseTest exampleTest) throws FixtureException {
+        for (Method m : beforeMethodsList) {
             if (m.isAnnotationPresent(Before.class)) {
                 try {
                     m.invoke(exampleTest);
@@ -57,11 +78,11 @@ public class ExecuterUtils {
         }
     }
 
-    public static int executeTestMethod(Method method, BaseTest exampleTest) throws TestException {
+    public static int executeTestMethod(Method method, BaseTest exampleTest) throws TestMethodException {
         try {
             method.invoke(exampleTest);
         } catch (IllegalAccessException e) {
-            throw new TestException("IllegalAccessException in test method execution", e);
+            throw new TestMethodException("IllegalAccessException in test method execution", e);
         } catch (InvocationTargetException e) {
             System.out.println("Test is failed. Exception was caught in 'test' method");
             e.printStackTrace();
@@ -70,8 +91,8 @@ public class ExecuterUtils {
         return 0;
     }
 
-    public static void executeAfterMethod(Method[] methodArray, BaseTest exampleTest) throws FixtureException {
-        for (Method m : methodArray) {
+    public static void executeAfterMethod(List<Method> afterMethodsList, BaseTest exampleTest) throws FixtureException {
+        for (Method m : afterMethodsList) {
             if (m.isAnnotationPresent(After.class)) {
                 try {
                     m.invoke(exampleTest);
