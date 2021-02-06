@@ -16,9 +16,8 @@ import java.util.stream.Collectors;
 
 public class ExecuterUtils {
 
-    public static void executeTestClass(BaseTest exampleTest) throws TestMethodException {
+    public static void executeTestClass(Class<? extends BaseTest> testClass) throws TestMethodException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
 
-        Class<? extends BaseTest> testClass = exampleTest.getClass();
         Method[] methodArray = testClass.getDeclaredMethods();
         List<Method> testMethodsList = getMethods(methodArray, Test.class);
         List<Method> beforeMethodsList = getMethods(methodArray, Before.class);
@@ -29,6 +28,8 @@ public class ExecuterUtils {
 
         for (Method method : testMethodsList) {
             if (method.isAnnotationPresent(Test.class)) {
+                BaseTest exampleTest = testClass.getDeclaredConstructor().newInstance();
+
                 try {
                     executeBeforeMethod(beforeMethodsList, exampleTest);
                     failedTestCount +=

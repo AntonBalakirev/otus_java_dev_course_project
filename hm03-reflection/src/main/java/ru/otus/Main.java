@@ -5,31 +5,27 @@ import ru.otus.test.ExampleTest;
 import ru.otus.test.ExampleTestWithBrokenFixture;
 import ru.otus.test.ExampleTestWithTestException;
 
+import java.lang.reflect.InvocationTargetException;
+
 import static ru.otus.ExecuterUtils.executeTestClass;
 
 public class Main {
 
-    public static void main(String[] args) throws TestMethodException {
+    public static void main(String[] args) throws TestMethodException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
 
         System.out.println("\nExecution with broken fixture");
         System.out.println("======================");
-        ExampleTestWithBrokenFixture
-                exampleTestWithBrokenFixture = new ExampleTestWithBrokenFixture();
-        executeTestClass(exampleTestWithBrokenFixture);
+        executeTestClass(ExampleTestWithBrokenFixture.class);
         System.out.println("======================");
 
         System.out.println("\nExecution with test failure");
         System.out.println("======================");
-        ExampleTestWithTestException
-                exampleTestWithTestException = new ExampleTestWithTestException();
-        executeTestClass(exampleTestWithTestException);
+        executeTestClass(ExampleTestWithTestException.class);
         System.out.println("======================");
 
         System.out.println("\nSuccessful execution");
         System.out.println("======================");
-        ExampleTest
-                exampleTest = new ExampleTest();
-        executeTestClass(exampleTest);
+        executeTestClass(ExampleTest.class);
         System.out.println("======================");
     }
 }
